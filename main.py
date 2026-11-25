@@ -1,22 +1,52 @@
-"""Write one funny epitaph to /output/entry.txt (stdlib only)."""
+"""Carve one epitaph into the output file.
+
+The line is built from small pieces so the wording stays easy to
+tune, then checked against the contest gate before it is written.
+Only the standard library is used.
+"""
 
 import os
+import sys
 
-ENTRY = "Here lies a man who outlived all his enemies. His debts outlived him."
+TARGET = "/output/entry.txt"
+LIMIT = 150
 
 
-def main():
-    text = ENTRY
-    if not text or not text.strip():
-        raise SystemExit("entry is empty")
-    if len(text) > 150:
-        raise SystemExit("entry exceeds 150 characters")
-    if "\n" in text or "\r" in text:
-        raise SystemExit("entry must be a single line")
-    os.makedirs("/output", exist_ok=True)
-    with open("/output/entry.txt", "w", encoding="utf-8", newline="") as f:
-        f.write(text)
+def build_line():
+    pieces = [
+        "I outlived every enemy ",
+        "I ever made. ",
+        "My debts, unfortunately, ",
+        "outlived me.",
+    ]
+    return "".join(pieces)
+
+
+def gate_ok(line):
+    if not line or not line.strip():
+        return "empty line"
+    if len(line) > LIMIT:
+        return "line over %d characters" % LIMIT
+    if "\n" in line or "\r" in line:
+        return "line must stay on one line"
+    return None
+
+
+def carve():
+    line = build_line()
+    problem = gate_ok(line)
+    if problem is not None:
+        print("gate failed: %s" % problem, file=sys.stderr)
+        sys.exit(1)
+    os.makedirs(os.path.dirname(TARGET), exist_ok=True)
+    with open(TARGET, "w", encoding="utf-8", newline="") as handle:
+        handle.write(line)
+    with open(TARGET, "r", encoding="utf-8", newline="") as handle:
+        written = handle.read()
+    if written != line:
+        print("gate failed: written text differs", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    main()
+    carve()
